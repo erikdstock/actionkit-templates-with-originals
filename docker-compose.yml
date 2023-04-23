@@ -1,0 +1,13 @@
+version: '3.7'
+services:
+  app:
+    build: .
+    command: aktemplates runserver 0.0.0.0:8000
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/app
+      - pip:/usr/local/lib/python2.7/site-packages
+    working_dir: '/app'
+volumes:
+  pip:
