@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+h1 {
+  @apply text-xl leading-7 font-bold md:text-2xl md:leading-8 text-red-900;
+}
+
+h2 {
+  @apply text-lg leading-6 font-medium text-gray-900;
+}
+
+.info-text {
+  @apply text-sm leading-5 font-medium text-gray-600;
+}
