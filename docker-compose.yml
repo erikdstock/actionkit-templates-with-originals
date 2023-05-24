@@ -3,7 +3,7 @@ services:
   app:
     environment:
       - TEMPLATE_DIR=template_set # the default
-      # - TEMPLATE_DIR=template_set_legacy # the default
+      # - TEMPLATE_DIR=template_set_legacy
       # - TEMPLATE_DIR=actionkit-original/templates
     build: .
     command: aktemplates runserver 0.0.0.0:8000
