@@ -1,4 +1,3 @@
-
 {% with profile.payment_processor_information as pp %}
 <form id="change_profile_{{ profile.id }}" {% if pp.processor == "stripe" %}data-stripe-pub-key="{{ pp.pub_key }}"{% endif %} class="action_form" name="act_{{ profile.id }}" method="POST" action="/act/" accept-charset="utf-8" onsubmit="return true;">
     <input type="hidden" name="page" value="{{ page.name }}">
@@ -284,7 +283,7 @@
 </form>
 {% if pp.use_vzero %}
 <script>
-initVZeroForForm('#change_profile_{{ profile.id }}', '{{ pp.client_token }}', {% if profile.is_ach %}true{% else %}false{% endif %}, {% if pp.use_3d_secure %}true, {% using profile.payment_nonce_info %}'{{nonce}}', '{{bin}}'{% endusing %}{% else %}false, '', ''{% endif %});
+initVZeroForForm('#change_profile_{{ profile.id }}', '{{ pp.client_token }}', {% if profile.is_ach %}true{% else %}false{% endif %}, {% if pp.use_3d_secure %}true, '{{profile.payment_nonce_info.nonce}}', '{{profile.payment_nonce_info.bin}}'{% else %}false, '', ''{% endif %});
 
 var ownership_type_menu = $('#change_profile_{{ profile.id }} [name=ownership_type]');
 if (ownership_type_menu.length) {
