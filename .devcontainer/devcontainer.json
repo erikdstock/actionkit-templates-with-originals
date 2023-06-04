@@ -1,0 +1,23 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/debian
+{
+	"name": "AK - MyDSA",
+	"image": "mcr.microsoft.com/devcontainers/python:0-3.9",
+	"features": {
+		"ghcr.io/devcontainers/features/node:1": {},
+		"ghcr.io/r3dpoint/devcontainer-features/tailwindcss-standalone-cli:1": {}
+	},
+	"postCreateCommand": "pip install -e git+https://github.com/MoveOnOrg/actionkit-templates#egg=actionkit-templates && npm i",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"bradlc.vscode-tailwindcss"
+			],
+			"settings": {
+				"files.associations": {
+					"*.css": "tailwindcss"
+				}
+			}
+		}
+	}
+}
