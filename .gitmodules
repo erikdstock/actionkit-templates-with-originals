@@ -1,2 +1,5 @@
 [submodule "actionkit-original"]
 	url = https://github.com/TheWalkers/ActionKit-Original.git
+[submodule "ActionKit-Original"]
+	path = ActionKit-Original
+	url = https://github.com/TheWalkers/ActionKit-Original.git
