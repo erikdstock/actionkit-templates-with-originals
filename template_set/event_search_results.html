@@ -1,0 +1,204 @@
+{% filter collapse_spaces %}
+
+{% comment %}
+    This file is so long because you can choose whether your campaign uses
+    event titles, venues, etc., and different choices produce different HTML.  
+
+    The field that's linked in each search result is the first of these
+    that's defined:
+
+        1. Title
+        2. Venue
+        3. Distance
+        4. Campaign name
+{% endcomment %}
+{% if events|is_defined %}
+    <input type="hidden" id="id_have_events" name="have_events" value="1">
+    
+    {% if not events|length %}
+        <h3>No events found near {{ place|default:"your location" }}.</h3>
+    {% else %}
+    
+    	{% if not hide_map %}
+    		<p>There are <strong>{{ open_events|length }}</strong> events open for signup {% if is_in_past or is_full %}({% if is_full %}plus <strong>{{ is_full|length }}</strong> full{% endif %}{% if is_in_past and is_full %}, {% endif %}{% if is_in_past and not is_full %}plus {% endif %}{% if is_in_past %}<strong>{{ is_in_past|length }}</strong> ended{% endif %}){% endif %}</p>
+    	{% endif %}
+        {% if campaign.show_address1 and not hide_map and map_events|length and map_events|length < 300 %}
+            <style>
+                #map {
+                    width: 100%;
+                    height: 400px;
+                }
+                .leaflet-container a.ak-button { color: #fff; }
+                #map .leaflet-popup-content p { margin: 5px 0px; }
+            </style>
+
+           <div id="map"></div>
+
+            <div id="map-items" style="display: none">
+                {% for event in map_events %}
+                    <div data-latitude="{{ event.latitude }}" data-longitude="{{ event.longitude }}" data-icon="{% if event.is_open_for_signup %}open_for_signup{% else %}not_open_for_signup{% endif %}">
+                        <p>{{ event.starts_at_dt|date:"l, F jS, g:i a" }}</p>
+                        <p class="ak-event-title">
+                            <a href="/event/{{ event.campaign.local_name }}/{{event.id}}/signup/?akid={{args.akid}}&amp;source={{args.source}}{% if campaign.id != event.campaign.id %}&amp;search_campaign={{ campaign.name }}{% endif %}" {% if event.public_title_is_from_campaign %}class="ak-campaign-title"{% endif %}>{{ event.public_title }}</a>
+                        </p>
+                        <p>{% if event.search_show_address1 %}{{ event.address1 }}<br>{% endif %}{{ event.search_general_location }}</p>
+                        {% if event.is_in_past %}
+                            <p><strong>Sorry, the event is over.</strong></p>
+                        {% elif event.is_full %}
+                            <p><strong>Sorry, the event is full.</strong></p>
+                        {% else %}
+                            <a href="/event/{{ event.campaign.local_name }}/{{event.id}}/signup/?akid={{args.akid}}&amp;source={{args.source}}{% if campaign.id != event.campaign.id %}&amp;search_campaign={{ campaign.name }}{% endif %}" class="ak-button">Sign up</a>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <script>
+                function draw_map() {
+                    // Extract list of mappable events
+                    var loc = [];
+                    $('#map-items div').each( function () {
+                        var item = $( this );
+                        loc.push( [
+                            item.html(),
+                            item.data('latitude'),
+                            item.data('longitude'),
+                            item.data('icon')
+                        ] );
+                    } ).remove();
+                    {% if all and not args.akid %}
+                    // akids in "all" may be empty because of server-side cache,
+                    // so substitute in any id from request args
+                    if (actionkit.args.akid) {
+                        // escape() prevents this from being an xss vector
+                        var akid_arg = 'akid=' + escape(actionkit.args.akid) + '&';
+                        for (var i=0; i<loc.length; i++) {
+                            // relies on exactly how the links are written above
+                            loc[i][0] = loc[i][0].replace(/akid=&/g, akid_arg);
+                        }
+                    }
+                    {% endif %}
+
+                    // Initialize the map
+                    var map = L.map('map').setView( [
+                        {{ map_events.0.latitude }},
+                        {{ map_events.0.longitude }}
+                    ], {% if all %}2{% else %}12{% endif %} );
+
+                    L.tileLayer(
+                        'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    }).addTo(map);
+
+                    // Plot markers
+                    var markers = L.markerClusterGroup({maxClusterRadius: 20});
+                    var icon = {
+                        open_for_signup: L.icon({
+                            iconUrl: '/media/modern/blue_marker.png',
+                            iconSize: [30, 50],
+                            iconAnchor: [15, 50]
+                        }),
+                        not_open_for_signup: L.icon({
+                            iconUrl: '/media/modern/grey_marker.png',
+                            iconSize: [30, 50],
+                            iconAnchor: [15, 50]
+                        })
+                    };
+                    var marker_items = [];
+                    for(var i=0; i<loc.length; i++) {
+                        marker_items.push(
+                            L.marker(
+                                [loc[i][1], loc[i][2]], {icon: icon[loc[i][3]]}
+                            ).bindPopup(loc[i][0])
+                        );
+                    }
+                    markers.addLayers(marker_items);
+                    map.addLayer(markers);
+                }
+
+                setTimeout( draw_map(), 0.01 );
+           </script>
+
+        {% endif %}
+		
+        {% for event in events %}   	
+        	{% if "Global" in event.mode or not all %}
+				<div class="ak-field-box {% if event.is_in_past or event.is_full %}ak-event-disabled{% endif %}">
+					<div class="ak-info-column">
+						<p class="ak-event-title">
+							<a href="/event/{{ event.campaign.local_name }}/{{event.id}}/signup/?akid={{args.akid}}&amp;source={{args.source}}{% if campaign.id != event.campaign.id %}&amp;search_campaign={{ campaign.name }}{% endif %}" {% if event.public_title_is_from_campaign %}class="ak-campaign-title"{% endif %}>
+                                {{ event.public_title }}
+                             </a>
+						</p>
+
+					{% if event.campaign.show_venue and event.venue %}
+						<span class="ak-event-venue">{{ event.venue }}</span>
+					{% endif %}
+			
+					{% if event.search_show_address1 %}
+						<div class="ak-event-address1">{{ event.address1 }}</div>
+					{% endif %}
+
+					{% if event.search_show_general_location %}
+						<div class="ak-event-city-etc">{{ event.search_general_location }}</div>
+					{% endif %}
+
+					{% if event.has_distance %}
+						<p><span class="ak-event-distance">{{ event.distance_str }} away</a></span></p>
+					   {% endif %}
+		
+					<table cellspacing="0" class="ak-event-table">
+						{% if event.starts_at %}
+							<tr class="ak-event-time">
+								<th>When:</th>
+								<td>{{ event.starts_at_dt|date:"l, F jS, g:i a" }} {% if "Global" in event.mode %}{{ event.local_timezone|timezone_display }}{% endif %}</td>
+							</tr>
+						{% endif %}
+						{% if event.campaign.show_directions and event.directions %}
+							<tr class="ak-event-directions">
+								<th>
+									{% if event.is_virtual %}
+										To connect:
+									{% else %}
+										Directions:
+									{% endif %}
+								</th>
+                                <td style="word-break: break-word; hyphens: auto">{{ event.directions|urlize }}</td>
+							</tr>
+						{% endif %}
+						{% if event.campaign.show_attendee_count %}
+							<tr class="ak-event-attendee-count">
+								<th>Attendee count:</th>
+								<td>{{ event.attendee_count }} attendee{{ event.attendee_count|pluralize }}</td>
+							</tr>
+						{% endif %}
+					</table>
+					</div>
+					<div class="ak-description-column" style="width: 100%">
+					{% if event.campaign.show_public_description %}
+						{% if event.public_description %}
+							<p class="ak-event-description">{{ event.public_description|linebreaksbr }}</p>
+						{% endif %}
+					{% endif %}
+					</div>
+				</div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    {% if campaign.public_create_page %}
+        <div>
+            <a class="ak-button ak-event-create" href="/event/{{ campaign.name }}/create/">Create your own event</a>
+        </div>
+    {% endif %}
+{% endif %}
+
+{% if errors|length %}
+    <ul id="ak-errors">
+    {% for key,val in errors.items %}
+        <li>{{ val|nth:0 }}</li>
+    {% endfor %}
+    </ul>
+{% endif %}
+
+{% endfilter %}

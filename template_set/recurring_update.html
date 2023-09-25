@@ -312,7 +312,7 @@ function disable_invisibles(form) {
     <div class="ak-grid-col {% if page.custom_fields.featured_image %} ak-grid-col-9-of-12 {% else %}ak-grid-col-12-of-12 {% endif %}">
 
         <div>
-            <p>Logged in as <a href="/me/">{{ logged_in_user.name }} (VIP)</a>. <a href="/logout/">Log out</a></p>
+            <p>Logged in as <a href="/me/">{{ logged_in_user.name }}</a>. <a href="/logout/">Log out</a></p>
         </div>
         <div style="display:none">{% comment %}actionkit.js wants this, but we don't{% endcomment %}
             <p id="unknown_user"></p>

@@ -1,0 +1,30 @@
+{% filter collapse_spaces %}
+        {% for target in targets %}
+            <div class="ak-target-area target">
+            <div class="ak-target-entry">
+            {% if is_checkboxes %}
+                <input id="id_target_{{target.pk}}" type="checkbox" name="target_checked" value="{{ target.pk }}">
+                <label for="id_target_{{target.pk}}">
+            {% endif %}
+            <span class="ak-target-titlename">{% if target.title_informal_full %} {{ target.title_informal_full }} {% endif %}</span><span class="ak-target-separator">: </span><span class="ak-target-contact">{{ target.contact_html|safe }}</span>
+            {% if is_checkboxes %}</label>{% endif %}
+            </div>
+            {% if target.callable_offices and options.local_offices %}
+                <a class="ak-target-toggle local_toggle" href="#" onclick="$(this).nextAll('div').toggle();$(this).prev('input[type=checkbox]').removeAttr('checked').toggle();return false;"><span class="local_toggle_label">Local Offices</span></a>
+                {% for office in target.callable_offices %}
+                    <div class="ak-target-office office">
+                    {% if is_checkboxes %}
+                        &nbsp;&nbsp;&nbsp;
+                        <input id="id_office_{{office.id}}" type="checkbox" name="target_office_checked" value="{{office.id}}">
+                        <label for="id_office_{{office.id}}">
+                    {% endif %}
+                    <span class="ak-target-location office_location">{{ office.city }}, {{ office.state }}:</span>
+                    {% if office.phone %}<span class="ak-target-phone office_phone"><span class="ak-target-label office_phone_label">tel<span class="ak-target-separator">: </span></span><a href="tel:{{ office.phone }}">{{ office.phone }}</a></span>{% endif %}
+                    {% if office.fax %}<span class="ak-target-fax office_fax"><span class="ak-target-label office_fax_label">fax<span class="ak-target-separator">: </span></span>{{ office.fax }}</span>{% endif %}
+                    {% if is_checkboxes %}</label>{% endif %}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            </div>
+        {% endfor %}
+        {% endfilter %}

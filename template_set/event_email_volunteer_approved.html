@@ -1,0 +1,14 @@
+Subject: You have been approved to moderate "{{campaign_title}}"!
+
+<!-- This email is sent to campaign volunteers once they are approved -->
+
+<p>Your offer to moderate "{{campaign_title}}" has been approved and you're ready to get started.</p>
+
+<p>To get started and find events, visit <a href="https://{% client_ssl_domain %}{{signup.url}}?i={{ user|login_string }}&l=1">https://{% client_ssl_domain %}{{signup.url}}?i={{ user|login_string }}&l=1</a></p>
+
+<p>Please <strong>don't forward or share this email</strong>: the link above is personalized, and can be used to view your personal information and moderate {% client_name %}'s events.</p>
+
+<p>Thanks again!</p>
+
+<!-- Replacement for unsubscribe -->
+<p><small>You're receiving this message because you offered to moderate "{{campaign_title}}" events.</small></p>

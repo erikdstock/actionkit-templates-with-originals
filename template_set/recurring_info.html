@@ -283,7 +283,7 @@
 </form>
 {% if pp.use_vzero %}
 <script>
-initVZeroForForm('#change_profile_{{ profile.id }}', '{{ pp.client_token }}', {% if profile.is_ach %}true{% else %}false{% endif %}, {% if pp.use_3d_secure %}true, '{{profile.payment.nonce_info.nonce}}', '{{profile.payment.nonce.bin}}'{% else %}false, '', ''{% endif %});
+initVZeroForForm('#change_profile_{{ profile.id }}', '{{ pp.client_token }}', {% if profile.is_ach %}true{% else %}false{% endif %}, {% if pp.use_3d_secure %}true, {% using profile.payment_nonce_info %}'{{nonce}}', '{{bin}}'{% endusing %}{% else %}false, '', ''{% endif %});
 
 var ownership_type_menu = $('#change_profile_{{ profile.id }} [name=ownership_type]');
 if (ownership_type_menu.length) {

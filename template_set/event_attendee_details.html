@@ -1,0 +1,59 @@
+{% filter collapse_spaces %}
+
+<div class="ak-field-box">
+
+    {% if campaign.use_title and campaign.show_title and event.title %}
+        <p class="ak-event-title"><a href="/event/{{ campaign.local_name }}/{{event.id}}/signup/?akid={{args.akid}}&amp;zip={{args.zip}}">{{ event.title }}</a></p>
+    {% endif %}
+
+    {% if event.venue %}
+        <span class="ak-event-venue">{{ event.venue }}</span>
+    {% endif %}
+
+    {% if event.attendee_show_address1 %}
+    <div class="ak-event-address1">{{ event.address1 }}</div>
+    {% endif %}
+    <div class="ak-event-city-etc">{{ event.attendee_general_location }}</div>
+
+    <table class="ak-event-table">
+    {% if event.get_starts_at_display %}
+        <tr class="ak-event-time">
+            <th>When:</th>
+            <td>
+                {{ event.get_starts_at_display }}
+                {% if event.show_timezone %}{{ event.local_timezone|timezone_display }}{% endif %}
+                {% if event.is_in_past %}
+                    <span class="ak-error ak-event-over-notice">
+                        (event is now over)
+                    </span>
+                {% endif %}
+            </td>
+        </tr>
+    {% endif %}
+    {% if event.directions %}
+        <tr class="ak-event-directions">
+            <th>
+                {% if event.is_virtual %}
+                    To connect:
+                {% else %}
+                    Directions to event:
+                {% endif %}
+            </th>
+            <td style="word-break: break-word; hyphens: auto">{{ event.directions|urlize }}</td>
+        </tr>
+    {% endif %}
+    {% if event.note_to_attendees %}
+        <tr class="ak-event-note-to-attendees">
+            <th>Your host says:</th>
+            <td>{{ event.note_to_attendees|linebreaksbr }}</td>
+        </tr>
+    {% endif %}
+    </table>
+
+    {% if event.public_description %}
+        <p class="ak-event-description">{{ event.public_description|linebreaksbr }}</p>
+    {% endif %}
+
+</div>
+
+{% endfilter %}

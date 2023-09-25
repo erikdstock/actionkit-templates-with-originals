@@ -1,0 +1,15 @@
+Subject: You are now a {{new_role}} of your "{{campaign_title}}" event
+
+<p>You are now a {{ signup.role }} of your "{{ campaign.local_title }}" event.</p>
+
+<p>To use your event tools, visit <a href="https://{% client_ssl_domain %}{{ signup.url }}{% if signup.role == "host" %}&i={{ user|login_string }}&l=1{% endif %}">https://{% client_ssl_domain %}{{ signup.url }}{% if signup.role == "host" %}&i={{ user|login_string }}&l=1{% endif %}</a></p>
+
+{% if signup.role == "host" %}
+<p>Please <b>don't forward this email</b>: the link above is personalized, and can be used to manage your event or change your account password.</p>
+{% endif %}
+
+<!-- Replacement for unsubscribe. -->
+<p><small>
+    You're receiving this message because you're signed up for an event.  
+    You can use your event tools, linked above, to cancel your signup and quit receiving these messages.
+</small></p>

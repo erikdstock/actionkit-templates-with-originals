@@ -1,0 +1,22 @@
+{% extends "./wrapper.html" %}
+{% block content %}
+<h2>Hello, {{ user.first_name }}</h2>
+<h3>Reverse donation</h3>
+
+{% if error_message %}
+<p>{{ error_message }}
+Please <a href="mailto:help@example.com">contact us</a> about this issue.
+</p>
+
+{% elif success %}
+<p>Your donation has been reversed.</p>
+
+{% else %}
+<p>Made a mistake? Click the button below to reverse your donation.</p>
+<form method="POST">
+    <input type="hidden" name="do_reverse" value="1">
+    <input type="submit">
+</form>
+
+{% endif %}
+{% endblock %}

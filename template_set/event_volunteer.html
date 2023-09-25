@@ -1,0 +1,54 @@
+{% extends "./wrapper.html" %}
+
+{% block content %}
+
+<div class="ak-grid-row">
+    <div class="ak-grid-col ak-grid-col-12-of-12">
+        <h2>{{ page.title }}</h2>
+    </div>
+</div>
+
+<form class="action_form" name="act" method="POST" action="/act/" accept-charset="utf-8">
+
+    <div class="ak-grid-row">
+        <div id="volunteer-story" class="ak-grid-col ak-grid-col-6-of-12">
+
+            {% if page.custom_fields.featured_image %}
+            <img class="ak-featured-img" src="{{page.custom_fields.featured_image}}">
+            {% endif %}
+
+            <div class="ak-abovefold">
+                {% include_tmpl form.volunteer_text %}
+            </div>
+
+            <div class="ak-mobile-lead"></div>
+
+            {% include "./progress_meter.html" %}
+        </div>
+
+        <div id="volunteer-form" class="ak-grid-col ak-grid-col-6-of-12 ak-styled-fields {{templateset.custom_fields.field_labels_class|default:"ak-labels-overlaid"}} {{templateset.custom_fields.field_errors_class|default:"ak-errs-below"}}">
+
+            {% include "./user_form_wrapper.html" %}
+            {% if form.ground_rules|is_nonblank %}
+            <div style="margin: 10px 0">
+              <input id="id_event_volunteer_ground_rules" type="checkbox" name="event_volunteer_ground_rules" value="1">
+              <label class="ak-checkbox-label" for="id_event_volunteer_ground_rules">
+                <strong>Required:</strong>
+                I agree to <a href="#" onclick="$('#id_ground_rules_text').show(); $(this).before(this.innerHTML + ' (below)').hide(); return false;">the rules</a> for volunteering.
+              </label>
+            </div>
+            <blockquote id="id_ground_rules_text" class="nojs">
+              <div class="strong">Volunteering ground rules:</div>
+              {% include_tmpl form.ground_rules %}
+            </blockquote>
+            {% else %}
+            <input type="hidden" name="event_volunteer_ground_rules" value="1">
+            {% endif %}
+            <button type="submit" class="full">Sign Up</button>
+        </div>
+    </div>
+
+    <input type="hidden" name="page" value="{{ page.name }}">
+</form>
+
+{% endblock %}

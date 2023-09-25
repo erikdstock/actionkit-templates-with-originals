@@ -1,0 +1,25 @@
+Subject: Hope you can come!
+{% with action.event as event %}
+Hi,
+
+{% filter single_line %}
+I'm attending an event as part of {% client_name %}'s 
+"{{ event.campaign.local_title }}" campaign.  It's 
+{% if event.mode == "onsite" %}at {{ event.address1 }} {% if event.venue %}({{ event.venue }}){% endif %}{% else %}{% if event.venue %}on {{ event.venue }}{% else %}online{% endif %}{% endif %}
+{% if event.mode != "global" %}in {% if event.search_show_map %}{{ event.city }}, {% endif %}{{ event.region }}{% endif %} 
+on {{ event.starts_at|date:"l, F j" }} at {{ event.starts_at|date:"f A" }}{% if event.show_timezone %} {{ event.local_timezone|timezone_display }}{% endif %}.
+{% endfilter %}
+
+RSVP here to join me:
+
+{% client_domain_url %}event/{{ event.campaign.name }}/{{ event.id }}/?source=taf
+
+Thanks,
+{{ action.user.first_name }}
+
+{% endwith %}
+
+{% comment %}
+[Campaigners: the default host tell-a-friend message comes from
+event_taf_msg_host.txt in the templateset.]
+{% endcomment %}

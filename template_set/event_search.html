@@ -1,0 +1,97 @@
+{% extends "./wrapper.html" %}
+
+{% block css_additions %}
+	<link href="/resources/leaflet/leaflet.css" rel="stylesheet" type="text/css">
+	<link href="/resources/leaflet/MarkerCluster.css" rel="stylesheet" type="text/css">
+	<link href="/resources/leaflet/MarkerCluster.Default.css" rel="stylesheet" type="text/css">
+{% endblock %}
+
+{% block script_additions %}
+	<script type="text/javascript" src="/resources/leaflet/leaflet.js"></script>
+	<script type="text/javascript" src="/resources/leaflet/leaflet.markercluster-src.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<div class="event-search ak-search-area">
+    <div class="ak-grid-row">
+        <div class="ak-grid-col ak-grid-col-12-of-12">
+            <h2>{{ page.title }} - Find an Event</h2>
+        </div>
+    </div>
+
+    <!-- no class=ak-form because we don't need to wait for context to show this -->
+    <form name="act" method="GET" action="" accept-charset="utf-8" onsubmit="actionkit.forms.eventSearch(this); return false;" class="ak-styled-fields">
+        <input type="hidden" name="page" value="{{ page.name }}">
+        <input type="hidden" name="template" value="event_search.html">
+        <input type="hidden" name="akid" value="{{ args.akid }}">
+        <input type="hidden" name="distance" value="50">
+        <input type="hidden" name="limit" value="10">
+        <input type="hidden" name="event_search_on_load" value="1">
+        
+        <div class="ak-grid-row">
+            <div class="ak-grid-col ak-grid-col-12-of-12">
+                 <div {% if form.search_page_text %}class="ak-grid-col-3-of-12 ak-margin-top-1 clearfix" style="float: right; min-width: 200px; margin-left: 1em"{% endif %}>
+                     <div style="{% if not form.search_page_text %}width: 50%; float: left; padding-right: 0.5em;{% endif %}">
+                         <a class="ak-button ak-share-button ak-small-share-button ak-facebook" href="/share/link?type=fb&amp;page_name={{page.name}}&amp;action_id={{action.id}}&amp;akid={{akid}}" target="_blank">Post to Facebook</a>
+                     </div>
+
+                     <div style="{% if not form.search_page_text %}width: 50%; float: left; padding-left: 0.5em;{% endif %}">
+                         <a class="ak-button ak-share-button ak-small-share-button ak-twitter" href="/share/link?type=tw&amp;page_name={{page.name}}&amp;action_id={{action.id}}&amp;akid={{akid}}" target="_blank">Share on Twitter</a>
+                         <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+                     </div>
+                 </div>
+
+                {% if form.search_page_text %}
+                    <div class="area">
+                        {% include_tmpl form.search_page_text %}
+                    </div>
+                {% endif %}
+
+                <ul class="compact" id="ak-errors"></ul>
+
+                <div class="ak-event-search">
+                    {% if campaign.allows_geographic_modes %}
+                    <div class="ak-display-inline-block">
+                        <label for="id_zip">{% if form.templateset.is_intl %}Postcode{% else %}ZIP{% endif %} or City:</label>
+                        <input type="text" name="place" value="{% if args.place %}{{args.place}}{% else %}{{args.zip}}{% endif %}">
+                    </div>
+                    {% if form.templateset.is_intl %}
+                        <div class="ak-display-inline-block">
+                        <label for="id_country">Country:</label>
+                        {% include "./country_select.html" %}
+                        </div>
+                    {% endif %}
+                    <button type="submit" class="ak-event-search">Search</button>
+                    {% endif %}
+                    {% if campaign.also_search_campaigns.all %}
+                    <div>
+                        <input type="hidden" name="also_search_present" value="1">
+                        Include:
+                        <input type="hidden" name="also_search_self_present" value="1">
+                        <input type="checkbox" name="also_search_self" value="{{ campaign.name }}" checked>
+                        {{ campaign.title }}
+                        {% for also in campaign.also_search_campaigns.all %}
+                            <input type="checkbox" name="also_search" value="{{ also.name }}" checked>
+                            {{ also.title }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+    </form>
+    <div class="ak-grid-row">
+        <div class="ak-grid-col ak-grid-col-12-of-12">
+            <div id="event-search-results">
+                {% if args.page %}
+                    {% include "./event_search_results.html" %}                
+                {% endif %}
+            </div>
+        </div>
+   </div>
+
+</div>
+
+{% endblock %}

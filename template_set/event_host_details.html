@@ -1,0 +1,68 @@
+{% filter collapse_spaces %}
+
+{% if event.venue %}
+    <div class="event-venue">
+        {{ event.venue }}
+    </div>
+{% endif %}
+
+<div class="event-address clearfix">
+    <div class="event-address-content">
+       {% if event.mode != "onsite" %}
+           <div class="ak-event-mode">{{ event.get_mode_display }}</div>
+       {% endif %}
+        {% if event.attendee_show_address1 %}
+        <div class="ak-event-address1">{{ event.address1 }}</div>
+        {% endif %}
+        <div class="ak-event-city-etc">{{ event.attendee_general_location }}</div>
+    </div>
+</div>
+
+<table class="ak-event-table">
+{% if event.get_starts_at_display %}
+    <tr class="ak-event-time">
+        <th>When:</th>
+        <td>
+            {{ event.get_starts_at_display }}
+            {% if event.show_timezone %}{{ event.local_timezone|timezone_display }}{% endif %}
+            {% if event.is_in_past %}<span class="ak-error ak-event-over-notice">(event is now over)</span>{% endif %}
+        </td>
+    </tr>
+{% endif %}
+{% if event.directions %}
+    <tr class="ak-event-directions">
+        <th>
+            {% if event.is_virtual %}
+                To connect:
+            {% else %}
+                Directions to event:
+            {% endif %}
+        </th>
+        <td style="word-break: break-word; hyphens: auto">{{ event.directions|urlize }}</td>
+    </tr>
+{% endif %}
+{% if event.note_to_attendees %}
+    <tr class="ak-event-note-to-attendees">
+        <th>Note to attendees:</th>
+        <td>{{ event.note_to_attendees|linebreaksbr }}</td>
+    </tr>
+{% endif %}
+{% if event.campaign.allow_private %}
+    <tr class="ak-event-privacy">
+        <th></th>
+        <td>
+            <label>Event is {% if event.is_private %}private{% else %}public{% endif %}.</label>
+        </td>
+    </tr>
+{% endif %}
+    <tr class="ak-event-signup-link">
+        <th>Signup link:</th>
+        <td> <a href="{% client_domain_url event.public_url %}">{% client_domain_url event.public_url %}</a></td>
+    </tr>
+</table>
+
+{% if event.public_description %}
+    <p class="ak-event-description">{{ event.public_description|linebreaksbr }}</p>
+{% endif %}
+
+{% endfilter %}

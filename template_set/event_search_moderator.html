@@ -1,0 +1,312 @@
+{% extends "./wrapper.html" %}
+{% load humanize %}
+
+{% block script_additions %}
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.7.0/moment.js"></script>
+
+<script type='text/javascript'>
+ $(window).load(function() {
+    $("#ak_advanced_event_search").submit(function(){
+        $("#ak-search-spinner").show();
+        $("#event-count").closest("div").hide();
+    });
+    $(".ak-advanced-toggle").click(function(e){
+        $(".ak-advanced-toggle").toggleClass("ak-collapse-toggle-inactive");
+        $(".ak-advanced").toggle("fast");
+    });
+
+    // reload when approaching session timeout, avoids unfriendly auth prompt for expired sessions
+    setTimeout(function(){location.reload()}, 1000*3600*7);
+
+    $("#ak_advanced_event_search").submit();
+ });
+ function setSortAndSearch(elem){
+    $("#ak_advanced_event_search input[name=order_by]").val(elem.value);
+    $("#ak_advanced_event_search").submit();
+ }
+ function showCount(count){
+    var $elem = $('#event-count');
+    $elem.text(count);
+    $elem.closest('div').show();
+ }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="ak-grid-row">
+    <div class="ak-grid-col ak-grid-col-12-of-12">
+	<h2>
+            {{campaign.title}} - Event Moderation
+	</h2>
+    </div>
+</div>
+<div class="ak-grid-row">
+    <div class="ak-grid-col {% if page.custom_fields.featured_image %} ak-grid-col-9-of-12 {% else %}ak-grid-col-12-of-12 {% endif %}">
+    <div>
+      {% if not logged_in_user.is_anonymous %}
+         <p>Logged in as <a href="/me/">{{ logged_in_user.name }}</a>. <a href="/logout/">Log out</a></p>
+      {% else %}
+         <p>Logged in as a manager.
+      {% endif %}
+    </div>
+    {% if form.search_page_text %}
+    <div class="ak-grid-row">
+      {% include_tmpl form.search_page_text %}
+    </div>
+    {% endif %}
+    <p>
+	<h4 id="ak-advanced-toggle" class="ak-advanced-toggle ak-collapse ak-collapse-toggle-inactive">
+	    Advanced Search
+	    <span class="ak-collapse-toggle-wrapper"><span class="ak-collapse-toggle-icon" >▼</span></span>
+	</h4>
+    </p>
+    <div class="ak-advanced ak-nodisplay ak-no-auto-display ak-field-box">
+	<form name="ak_advanced_event_search" class="ak-styled-fields" id="ak_advanced_event_search" onsubmit="actionkit.forms.moderatorEventSearch(this);return false;" method="GET">
+	    <div class="ak-location-filter">
+		<h3 class="ak-margin-bottom-5">Location</h3>
+		<div class="ak-grid-row ak-margin-bottom-5">
+		    <label for="id_radius">
+			Limit to within
+		    </label>
+		    <input type="text" size="3" name="radius" id="id_radius" value="30">
+		    <label for="id_zip">
+			miles of
+		    </label>
+		    <input type="text"  name="zip" id="id_zip">
+		    <span class="ak-instructions">Enter city and country, city and US state, or postcode.</span>
+		</div>
+		<div class="ak-grid-row ak-margin-bottom-5">
+		    <label for="id_states">Limit to US state(s):</label>
+		    <input type="text" name="states" id="id_states">
+		    <span class="ak-instructions">E.g., AK, CA</span>
+		</div>
+    <div class="ak-grid-row ak-margin-bottom-5">
+      <label for="id_districts">Limit to US district(s):</label>
+      <input type="text" name="districts" id="id_districts">
+      <span class="ak-instructions">E.g., AK_01, CA_51</span>
+    </div>
+		<div class="ak-grid-row ak-margin-bottom-5">
+		    <div class="ak-display-inline-block">
+			<label for="id_country">Limit by country:</label>
+		    </div>
+		    <div class="ak-display-inline-block">
+			{% include "./country_select.html" %}
+		    </div>
+		</div>
+	    </div>
+	    <div>
+		<h3 class="ak-margin-bottom-5">Status</h3>
+	    </div>
+	    <div class='ak-grid-row ak-status ak-margin-bottom-5'>
+            <div class='ak-grid-col ak-grid-col-4-of-12 ak-status-filter'>
+		<input type="hidden" name="campaign_id" value="{{campaign.id}}">
+		<ul class="options">
+                   <input type="hidden" name="for_moderation">
+		   {% if campaign.require_staff_approval %}
+		   <li>
+                       <input type="radio" name="status" checked value="unapproved"  id="id_awaiting_approval">
+                       <label for="id_awaiting_approval">Awaiting Approval</label>
+                   </li>
+		   {% endif %}
+                   <li>
+                       <input type="radio" name="status" value="" id="id_any_status">
+                       <label for="id_any_status">Any</label>
+                   </li>
+                   <li>
+                       <input type="radio" name="status" {% if not campaign.require_staff_approval %}checked{% endif %} value="open"  id="id_open">
+                       <label for="id_open">Open for signup</label>
+                   </li>
+                   <li>
+                       <input type="radio" name="status" value="flagged" id="id_flagged">
+                       <label for="id_flagged">Flagged by moderator</label>
+                   </li>
+                   <li>
+                       <input type="radio" name="status" value="unconfirmed" id="id_unconfirmed">
+                       <label for="id_unconfirmed">Waiting for host to confirm</label>
+                   </li>
+                   <li>
+                       <input type="radio" name="status" value="cancelled" id="id_cancelled" / >
+                       <label for="id_cancelled">Cancelled or deleted</label>
+                   </li>
+               </ul>
+           </div>
+           <div class='ak-grid-col ak-grid-col-4-of-12 ak-privacy-filter'>
+               <ul class="options">
+                   <li>
+                       <input type="checkbox" name="future_only" checked value="1" id="id_future_only">
+                       <label for="id_future_only">Future events only</label><br>
+                   </li>
+                   <li>
+                       <input type="checkbox" name="moderation_status" value="unmoderated" id="id_moderation_status">
+                       <label for="id_moderation_status">Unmoderated only</label><br>
+                   </li>
+               </ul>
+           </div>
+           <div class='ak-grid-col ak-grid-col-4-of-12 ak-privacy-filter'>
+               <ul class="options">
+                   <li>
+                       <input type="radio" name="privacy" value="private" id="id_private">
+                       <label for="id_private">Private</label>
+                   </li>
+                   <li>
+                       <input type="radio" name="privacy" value="public" id="id_public">
+                       <label for="id_public">Public</label>
+                   </li>
+               </ul>
+           </div>
+        </div>
+
+        <input type="hidden" name="page" value="{{page.name}}">
+        <input type="hidden" name="order_by" id="id_order_by" value="-created_at">
+	<div>
+	    <h3 class="ak-margin-bottom-5">Text String</h3>
+	</div>
+	<p>
+	<label for="id_search_text">
+	    Search events and hosts for a specific text string:
+	</label>
+	</p>
+	<input size="60" id="id_search_text" class="" name="q" dir="auto" type="text"><br> 
+	<button type="submit" class="ak-event-search">Search</button>
+	</form>
+    </div>
+{% block below_form %}
+<script type="text/javascript">
+ actionkit.forms.contextRoot = '/context/';
+ actionkit.forms.initForm('ak_advanced_event_search');
+</script>
+{% endblock %}
+  </div>
+</div>
+  <div class='container'>
+        <div class="ak-grid-row ak-search-meta ak-margin-bottom-5">
+	  <div class="ak-order-by-display ak-styled-fields ak-display-inline-block">
+	    <div class="ak-display-inline-block">
+	      <p>
+		<label for="id_order_by_display" >Sort by: </label>
+	      </p>
+	    </div>
+	    <div class="ak-display-inline-block">
+	      <select name="order_by_display" id="id_order_by_display" onchange="setSortAndSearch(this)">
+		<option selected value="-created_at" id="id_created_at">Newest events first</option>
+		<option value="starts_at" id="id_starts_at">Soonest-starting events first</option>
+		<option value="-attendee_count" id="id_attendee_count">Largest events first</option>
+		<option value="random" id="id_random">Random</option>
+		<option value="-last_moderation_date" id="id_moderation_date">Most recently moderated</option>
+	      </select>
+	    </div>
+	  </div>
+	  <div id="ak-search-spinner" class="ak-display-inline-block ak-pull-right" style="display:none">
+	    <div style="float: right" class="ak-spinner">
+	      <div class="ak-spinner__item1"></div>
+	      <div class="ak-spinner__item2"></div>
+	      <div class="ak-spinner__item3"></div>
+	      <div class="ak-spinner__item4"></div>
+	    </div>
+	  </div>
+	  <div class="ak-display-inline-block ak-pull-right" style="display:none"><p><span id="event-count"></span> events found.</p></div>
+	</div>
+    <script type='text/ak-template' for="search_results">
+      [% if(typeof results !== 'undefined'){ %]
+      [% showCount(results.meta.total_count); %]
+      [% for ( var i = 0; i < results.objects.length; i++ ) { %]
+        <div class="ak-event ak-field-box ak-grid-row">
+          [% with(results.objects[i]){ %]
+          <div class="ak-grid-col ak-grid-col-6-of-12">
+            <div>
+              <p>
+                  <b class="ak-event-field ak-title">[%= title %]</b> (ID: [%= id %])
+              </p>
+            </div>
+            <div>
+              <p>
+                <b>Description</b>:
+                <span class="ak-event-field ak-description">[%= public_description %]</span>
+              </p>
+              <p>
+                <b>Note to attendees</b>:
+                <span class="ak-event-field ak-note_to_attendees">[%= note_to_attendees %]</span>
+              </p>
+              <p>
+                <b>Directions</b>:
+                <span class="ak-event-field ak-directions">[%= directions %]</span>
+              </p>
+            </div>
+          </div>
+          <div class="ak-grid-col ak-grid-col-6-of-12">
+            <div>
+              <p>
+                <span class="ak-event-field ak-status"><b>Status</b>: [%= status_summary %]</span>
+              </p>
+            </div>
+            <div>
+              <p>
+                <b>Hosts</b>:
+                <span class="ak-event-field ak-hosts">
+                  [% for ( var h = 0; h < hosts.length; h++ ){ %]
+                  [% with(hosts[h]){ %]
+                  [%= h ? " and " : "" %]
+                  [%= name %]
+                  [% } %]
+                  [% } %]
+                </span> |
+		<span class="ak-event-field ak-attendees"><b>Sign-ups</b>: [%= attendee_count %] ([%= max_attendees %] max.)</span>
+              </p>
+            </div>
+            <div>
+              <p>
+                <b>Venue</b>:
+                <span class="ak-event-field ak-venue">[%= venue %]<br>
+		  [%= address %]
+		</span>
+              </p>
+            </div>
+            <div>
+              <p>
+                <b>When</b>: <span class="ak-event-field ak-date">[%= moment(starts_at).format('LLL') %]</span>
+              </p>
+            </div>
+            [% if(moderation_actions.length){ %]
+            <div>
+              <p>
+                <b>Last Moderation Action</b>:
+                <span class="ak-event-field ak-last-moderation-date">[%= moment.utc(moderation_actions[0].created_at).fromNow() %]</span>
+              </p>
+            </div>
+            [% } %]
+	    [% if(status == 'active' || status == 'flagged'){ %]
+              <div>
+                <p>
+                  <span class="ak-event-field ak-url">
+                    [% var url = '/event/{{page.name}}/' + id + '/moderate/?akid={{signup.user.token}}'; %]
+                    <a class="ak-button" href="[%= url %]">Moderate</a>
+                  </span>
+                </p>
+              </div>
+	    [% } %]
+	  </div>
+          [% } %]
+        </div>
+      [% } %]
+        [% if(results.meta.previous !== null || results.meta.next !== null){ %]
+	<div class="ak-pagification">
+	  <p>
+           [% if(results.meta.previous !== null){ %]
+              <a class="previous-link" onclick="actionkit.forms.moderatorEventSearch(null, null, '[%= results.meta.previous %]');return false;" href='#'>Previous</a> |
+           [% } %]
+	   [% var page_num = parseInt(results.meta.offset/results.meta.limit+1, 10); %]
+	    Page [%= page_num %]
+           [% if(results.meta.next !== null){ %]
+	      | <a class="next-link" onclick="actionkit.forms.moderatorEventSearch(null, null, '[%= results.meta.next %]');return false;" href='#'> Next</a>
+           [% } %]
+	  </p>
+	</div>
+	[% } %]
+        <p class="ak-instructions">
+          Some events may be excluded from this search. Check Advanced Search for more search options.
+        </p>
+      [% } %]
+    </script>
+    <div id="search_results" name="search_results"></div>
+</div>
+{% endblock %}

@@ -1,0 +1,311 @@
+{% extends "./event_host_tools.html" %}
+
+{% block script_additions %}
+
+{{ block.super }}
+
+<script type="text/javascript">
+function handleModeratorJumpLink() {
+    if (this.id == 'email-hosts-link'){
+	targetEl = $('div.contact-hosts')
+    }
+    // Unhide email form if needed
+    if ( /^email-/.test(this.id) ) {
+        var emailButton = targetEl.closest('form').find('input[type="submit"].email');
+        handleEmail.apply(emailButton, []);
+    }
+    targetEl.addClass('target');
+    return true;
+}
+
+function updateFormClasses($field){
+    var curValue = $field.val();
+    var $container = $field.closest('.ak-form');
+    var classes = $container.prop('classList');
+    // clear existing classes
+    for(var i=0;i<classes.length;i++){
+	if(classes[i].startsWith('ak-mark-')){
+	    $container.removeClass(classes[i]);
+	}
+    }
+    if(curValue == ""){
+	curValue = 'unset';
+    }
+    var newClass = 'ak-mark-' + curValue;
+    $container.addClass(newClass);
+}
+
+function initModeratorTools(){
+  $("#event-moderate-tools .jump-link").click(handleModeratorJumpLink);
+  $("#id_mark_as").change(function(e){updateFormClasses($(e.target))});
+  $("tr.ak-custom-fields").has("li").closest("tbody").addClass("ak-collapse");
+  $(".ak-collapse").click(function(e){$(e.currentTarget).toggleClass("ak-collapse-toggle-inactive")});
+  $("button[confirm-message]").click(confirmSubmit);
+  actionkit.forms.setForm("act");
+}
+
+$(initModeratorTools); 
+
+</script>
+{% endblock %}
+      {% block extra_links %}
+      <div class="ak-bar ak-field-box" id="event-moderate-tools">
+        <h3>Moderate Event</h3>
+           {% if user_is_manager %}
+             Logged in as a manager
+	         {% elif user_is_moderator %}
+             Logged in as a moderator
+	         {% endif %}
+	         <br>
+           {% if event.is_awaiting_approval %}
+              <span class="ak-error">This event is awaiting approval.</span>
+           {% endif %}
+           <ul id="event-moderate-links">
+             {% include_tmpl form.tools_sidebar %}
+             {% if campaign.require_email_confirmation and not event.host_is_confirmed %}
+                <li><span class="ak-error">This event is awaiting confirmation by the host</span><br><a onclick="$.get('/event/{{campaign.local_name}}/{{event.id}}/confirm_event/'); $(this).text('Confirmed');" href="#">Confirm for host</a></li>
+             {% endif %}
+             {% if event.campaign.allow_moderator_edits and hosts %}
+                {% with host=hosts.0 %}
+                   <li><a href="/event/{{event.local_campaign.create_page.name}}/create/?action_id={{ host.action.id }}&amp;update=1&amp;want_prefill_data=1&amp;akid={{ host.user.akid }}&amp;mod_akid={{ user.akid }}">Edit event details</a></li>
+                {% endwith %}
+             {% endif %}
+             <li><a class="jump-link" id="email-hosts-link" href="#contact-hosts">Email host{{ hosts|length|pluralize }}</a></li>
+             <li><a href="/logout/">Log out</a></li>
+           </ul>
+      </div>
+      {% endblock %}
+      {% block host_links %}
+      <div class="ak-bar ak-field-box" id="event-host-tools">
+          <h3>Host's Tools</h3>
+          <ul id="event-host-links">
+              {% if attendees %}
+              <li class="if-js"><a class="jump-link" id="email-attendees-link" href="#contact-attendees">Email attendee{{ attendees|length|pluralize }}</a></li>
+              {% else %}
+              <!-- Flag that the functionality will be there -->
+              <li class="if-js">
+                  Email attendees<br>
+                  (Available after people sign up for the event.)
+              </li>
+              {% endif %}
+              {% if event.is_in_past %}
+              <li class="if-js"><a class="jump-link" id="add-attendees-link" href="#attendees-add">Add Attendees</a></li>
+              {% endif %}
+              {% if event.is_open_for_signup and page.pagefollowup.send_taf %}
+              <li class="if-js"><a class="jump-link" id="invite-friends-link" href="#invite-friends">Invite friends</a></li>
+              {% endif %}
+          </ul>
+      </div>
+      {% endblock %}
+      {% block details %}
+         <!-- Details -->
+         <div id="moderator-event-details ak-clearfix">
+             <h3>
+                 Event Details
+                 {% block event_edit_link %}
+                     {% if event.campaign.allow_moderator_edits and hosts %}
+                         {% with host=hosts.0 %}
+                             (<a class="ak-underline-on-hover" href="/event/{{event.local_campaign.create_page.name}}/create/?action_id={{ host.action.id }}&amp;update=1&amp;want_prefill_data=1&amp;akid={{ host.user.akid }}&amp;mod_akid={{ user.akid }}">Edit</a>)
+                         {% endwith %}
+                     {% endif %}
+                 {% endblock %}
+             </h3>
+             {% include "./event_moderate_details.html" %}
+         </div>
+     {% endblock %}
+     {% block tools %}
+     {% if not event.is_in_past %}
+	<form class="ak-form ak-mark-unset" name="act" method="POST" action="/act/" accept-charset="utf-8">
+	  <div class="moderate-form ak-field-box ak-margin-1">
+	    <h3>
+		{% if event.is_awaiting_approval %}Approve, Flag,{% else %}Flag{% endif %} or Delete Event
+	    </h3>
+	    <div class="ak-styled-fields {{templateset.custom_fields.field_errors_class|default:"ak-errs-below"}}">
+	      <div class="ak-mark-event">
+		<label for="id_mark_as">Mark event:</label>
+		<select name="event_mark_as" id="id_mark_as">
+		  <option value="">--</option>
+		  {% if event.is_awaiting_approval or event.status == 'flagged' %}
+		    <option value="approved">Approved</option>
+		  {% endif %}
+		  <option value="flagged">Flagged</option>
+		  <option value="deleted">Deleted</option>
+		</select>
+	      </div>
+	      <ul class="compact" id="ak-errors"></ul>
+	      <div id="unknown_user" class="ak-user-form">
+		{% include "./user_form.html" %}
+	      </div>
+	      <div class="ak-custom-field-html">
+		{% include_tmpl form.custom_field_html %}
+	      </div>
+	      <div class="ak-limit-by-mark ak-deleted instructions">
+              <div>
+                  <label style="padding: 0; font-weight: normal">
+                      <input name="suppress_email" type="checkbox">
+                      Don't send notification emails for this change
+                  </label>
+              </div>
+		<p>
+		  Please explain why you're deleting this event e.g. spam, unresponsive host, etc.
+		</p>
+	      </div>
+	      <div>
+		<label for="id_comment">Comment</label>
+		<textarea id="id_comment" name="action_comment"></textarea>
+	      </div>
+	    </div>
+	    <input type="hidden" name="page" value="{{page.name}}">
+	    <input type="hidden" name="event_id" value="{{event.id}}">
+	    <input type="hidden" name="required" value="action_comment">
+	    <input type="hidden" name="required" value="event_mark_as">
+	    <button class="ak-submit-button ak-limit-by-mark ak-unset ak-approved ak-flagged" type="submit">Submit</button>
+	    <button class="ak-submit-button ak-limit-by-mark ak-deleted" confirm-message="Really delete event? This can't be undone." type="submit">Submit</button>
+	  </div>
+	</form>
+      {% endif %}
+{% with previous_actions=event.moderation_actions  %}
+{% if previous_actions %}
+<div class="ak-clearfix">
+    <h3>
+        Previous Moderator Activity
+    </h3>
+    <table class="moderation-tbl ak-data-table">
+        <thead>
+            <tr>
+                <th class="date-col">Date</th>
+                <th class="who-col">Who</th>
+                <th class="comments-col">Comments</th>
+                <th class="change-col" colspan="2">Change</th>
+            </tr>
+        </thead>
+        {% for action in previous_actions %}
+        <tbody class="ak-action-row ak-collapse-toggle-inactive">
+            <tr class="ak-basics">
+                <td>
+                    <p>
+                        {{ action.get_created_at_display }}
+                    </p>
+                </td>
+                <td>
+                    <p>
+                        {% if action.user == signup.user and not user_is_manager %}
+                          You
+                        {% else %}
+                          {% if action.user.first_name %}
+                           {{ action.user.first_name }} (Moderator)
+                          {% else %}
+                           Another Moderator
+                          {% endif %}
+                        {% endif %}
+                    </p>
+                </td>
+                <td>
+                    <p>{{ action.custom_fields.comment }}</p>
+                </td>
+                <td>
+                    <p class="ak-status-changed">
+                        <b>
+                            {% if action.approved_event %}
+                              APPROVED
+                            {% elif action.deleted_event %}
+                              DELETED
+                            {% else %}
+                              FLAGGED
+                            {% endif %}
+                        </b>
+                    </p>
+                </td>
+		<td class="ak-toggle-cell">
+		    <span class="ak-collapse-toggle-wrapper"><span class="ak-collapse-toggle-icon" >▼</span></span>
+		</td>
+            </tr>
+            <tr class="ak-custom-fields">
+                <td colspan="5">
+		    <ul>
+                        {% for key, value in action.custom_fields.items %}
+                           {% if key != "comment" %}
+                            <li>
+			     <b>{{ key|readable_identifier }}:</b> {{ value }}<br>
+			    </li>
+                           {% endif %}
+                        {% endfor %}
+		    </ul>
+                </td>
+            </tr>
+        </tbody>
+        {% endfor %}
+    </table>
+            </div>
+            {% endif %}
+	{% endwith %}
+        {% if event_emails %}
+            <div class="ak-clearfix">
+              <h3>
+                Emails
+              </h3>
+              <table class="email-tbl ak-data-table">
+                <thead>
+		  <tr>
+                    <th class="date-col">Date</th>
+                    <th class="who-col">Sender</th>
+                    <th class="recipient-col">Recipient(s)</th>
+                    <th class="subject-col">Subject</th>
+                    <th class="toggle-col">&nbsp;</th>
+		  </tr>
+                </thead>
+		{% for email in event_emails %}
+                <tbody class="email-row ak-collapse ak-collapse-toggle-inactive">
+		  <tr class="meta">
+		    <td>{{ email.get_created_at_display }}</td>
+		    <td>
+		      {{ email.from_type|title }}{% if email.from_user %}: {{ email.from_user }}{% endif %}
+		    </td>
+		    <td>
+		      {% with recipients=email.to_users.all %}
+		      {{ email.to_type|title }}{{recipients|length|pluralize }}:
+		      {% for user in recipients %}
+		        {{ user.name }}{% if not forloop.last %}, {% endif %}
+		      {% endfor %}
+		      {% endwith %}
+		    </td>
+		    <td>
+		      {% if email.user_written_subject %}
+		        {{ email.user_written_subject }}
+		      {% else %}
+		        <i>No subject recorded</i>
+		      {% endif %}
+		    </td>
+		    <td><span class="ak-collapse-toggle-wrapper"><span class="ak-collapse-toggle-icon" >▼</span></span></td>
+		  </tr>
+		  <tr class="body">
+		    <td colspan="5">
+		      <p>
+			<b>Body:</b> {{ email.body.body }}
+		      </p>
+		    </td>
+		  </tr>
+		</tbody>
+		{% endfor %}
+	      </table>
+	    </div>
+	{% endif %}
+        <!-- Host roster -->
+        {% with hosts as signups %}
+           {% include "./event_roster.html" %}
+        {% endwith %}
+        <!-- Guest roster -->
+        {% if attendees or args.form_name == 'manage-attendee' %}
+          {% with attendees as signups %}
+            {% include "./event_roster.html" %}
+          {% endwith %}
+	{% endif %}
+        {% include './event_roster_add.html' %}
+{% endblock %}
+{% block find_another_event %}<div><a href="/event/{{ campaign.local_name }}/moderator_search/">Search for more events</a></div>{% endblock %}
+{% block below_form %}
+    <script type="text/javascript">
+        actionkit.forms.contextRoot = '/context/';
+        actionkit.forms.initForm('act');
+    </script>
+{% endblock %}

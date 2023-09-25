@@ -1,0 +1,14 @@
+Subject: Event details changed for your "{{ event.title }}" event
+
+This is a notification that an event you're signed up for has been changed:
+{% for field, change in changes.items %}
+<li><b>{{ field }}</b> changed to {{ change.1 }}</li>
+{% endfor %}
+
+<p>To view the full event details, visit <a href="https://{% client_ssl_domain %}{{ signup.url }}{% if signup.role == "host" %}&i={{ user|login_string }}&l=1{% endif %}">https://{% client_ssl_domain %}{{ signup.url }}{% if signup.role == "host" %}&i={{ user|login_string }}&l=1{% endif %}</a></p>
+
+<!-- Replacement for unsubscribe. -->
+<p><small>
+    You're receiving this message because you're signed up for an event.  
+    You can use your event tools, linked above, to cancel your signup and quit receiving these messages.
+</small></p>

@@ -1,0 +1,25 @@
+{% extends "./wrapper.html" %}
+
+{% block content %}
+<div class="ak-grid-row">
+    <div class="ak-grid-col ak-grid-col-12-of-12">
+        {% with action.event.campaign as campaign %}
+        {% if campaign.require_email_confirmation and campaign.create_page.followup.send_email %}
+            <h2>Confirm Your Event</h2>
+            <p>Check your email {% if args.email %}at {{args.email}}{% endif %} to finish creating your event.</p>
+        {% elif campaign.require_staff_approval %}
+            <h2>Staff approval required</h2>
+            <p>Your event must be approved by staff before it will be open for signups; when it is approved, you'll receive an email.</p>
+        {% else %}
+            {% if campaign.create_page.followup.send_email %}
+                <h2>View Host Tools</h2>
+                <p>Thanks for signing up to host an event! Now check your email {% if args.email %}at {{args.email}}{% endif %} to view your host tools.</p>
+            {% else %}
+                <h2>Thank you!</h2>
+                <p>Thanks for signing up to host an event! You'll hear from us soon.</p>
+            {% endif %}
+        {% endif %}
+        {% endwith %}
+    </div>
+</div>
+{% endblock %}
