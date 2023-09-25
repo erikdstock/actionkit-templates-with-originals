@@ -1,0 +1,17 @@
+{% extends "./wrapper.html" %}
+{% block content %}
+<h2>Hello, {{ user.first_name }}</h2>
+<p>
+    Please complete the information below.
+</p>
+<p>
+    <form method="POST">
+        {{ form }}
+        <br>
+        <input type="submit">
+    </form>
+</p>
+<p>
+    Or, <a href="{{ donate_url }}">re-enter your information</a>.
+</p>
+{% endblock %}

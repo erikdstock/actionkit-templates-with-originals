@@ -1,0 +1,54 @@
+{% filter collapse_spaces %}
+{% with pt=privacy_text %}
+<div class="ak-privacy ak-errs-below">
+    {% if pt.show_if %}
+        <input type="hidden" name="privacy_show_if" value="{{ pt.show_if }}">
+    {% endif %}
+    
+    {% if pt.notice %}
+        <input type="hidden" id="privacy_notice" name="privacy_hidden" value="{{pt.notice_hash}}">
+        <div id="ak-fieldbox-privacy_notice">{{pt.notice|safe}}</div>
+    {% endif %}
+    
+    {% if pt.optin and pt.optout %}
+        <input type="hidden" name="required" value="privacy">
+        <input type="hidden" name="require_opt_in" value="1">
+
+        <input type="hidden" name="privacy_optin_lists" value="{{ list_id }}">
+        {% if pt.unsub_optouts %}
+            <input type="hidden" name="privacy_optout_unsub_all" value="1">
+        {% endif %}
+        {% if pt.optouts_skip_thanks %}
+            <input type="hidden" name="privacy_optout_skip_confirmation" value="1">
+        {% endif %}
+
+        <div id="ak-fieldbox-privacy_radio">
+            <div>
+                <label>
+                    <input type="radio" name="privacy" id="privacy_optin" value="{{pt.optin_hash}}"> 
+                    {{pt.optin|safe}}
+                </label>
+            </div>
+            <div>
+                <label>
+                    <input type="radio" name="privacy" id="privacy_optout" value="{{pt.optout_hash}}"> 
+                    {{pt.optout|safe}}
+                </label>
+            </div>
+        </div>
+
+        {% if pt.really_optout %}
+            <div id="really-opt-out" style="display: none;">{{ pt.really_optout|safe }}</div>
+            <script>
+            (function() {
+                var reallyOptOut = $('#really-opt-out');
+                $('#privacy_optin').bind('click',  function(){ reallyOptOut.hide() })
+                $('#privacy_optout').bind('click', function(){ reallyOptOut.show() })
+            })()
+            </script>
+        {% endif %}
+    {% endif %}
+    
+</div>
+{% endwith %}
+{% endfilter %}
