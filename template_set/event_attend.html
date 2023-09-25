@@ -1,0 +1,222 @@
+{% extends "./wrapper.html" %}
+
+{% block css_additions %}
+	<link href="/resources/leaflet/leaflet.css" rel="stylesheet" type="text/css">
+	<style type="text/css">
+		#ak-map {
+			height: 250px;
+		}	
+		.ak-marker {
+			width: 10px;
+			position: relative;
+			top: 4px;
+		}
+		.ak-larger-text {
+			text-decoration: none;
+			font-size: 14px;
+		}
+	</style>
+{% endblock %}
+
+{% block script_additions %}
+<script type="text/javascript" src="/resources/leaflet/leaflet.js"></script>
+<script type="text/javascript">
+$( function () {
+    var have_events = $('#id_have_events').val(); 
+    if ( ! have_events ) {
+        var args = actionkit.utils.getArgs();
+        actionkit.forms.eventSearch(null, {
+            event_id: args.event_id, 
+            zip: args.zip, 
+            page: $('#id_page').val()
+        });
+    }                    
+});
+
+$(window).on('load', function (){
+/*Add map*/
+	var map = L.map('ak-map').setView([ {{ event.latitude }}, {{ event.longitude }} ], 10);
+	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+	}).addTo(map);
+	var myIcon = L.icon({
+		iconUrl: '/media/modern/blue_marker.png',
+		iconSize: [30, 50]
+	});
+	L.marker([{{ event.latitude }}, {{ event.longitude }}], {icon: myIcon}).addTo(map);
+	});
+</script>
+
+
+{% endblock %}
+	
+
+{% block content %}
+
+<form id="id_act" class="ak-form ak-styled-fields" name="act" method="POST" action="{% if update %}/update_action/{% else %}/act/{% endif %}" accept-charset="utf-8">
+
+    <input type="hidden" name="page" id="id_page" value="{{ page.name }}">
+    <input type="hidden" name="event_id" value="{{ args.event_id }}">
+    {% if event.is_open_for_signup or update or allow_ended %}
+        <div class="ak-grid-row">
+            <div class="ak-grid-col ak-grid-col-12-of-12">
+                {% if not update %}
+                    <h2>{{ page.title }}</h2>
+                {% else %}
+                    <h2>Update Signup Information</h2>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="ak-grid-row ak-grid-row-inverted">
+            {% if page.custom_fields.featured_image %}
+            <div class="ak-grid-col ak-grid-col-3-of-12">
+                <img class="ak-featured-img" src="{{page.custom_fields.featured_image}}">
+            </div>
+            {% endif %}
+
+            <div class="ak-grid-col {% if page.custom_fields.featured_image %}ak-grid-col-9-of-12{% else %}ak-grid-col-12-of-12{% endif %}">
+                {% if not update and form.signup_text %}
+                    <div class="ak-page-content">
+                        {% include_tmpl form.signup_text %}
+                    </div>
+                {% endif %}
+                {% if not update %}
+                <p>
+                    There
+                    {% if other_open_events == 1 %}is{% else %}are{% endif %}
+                    <strong>
+                        {{ other_open_events }}
+                        {% if event.is_open_for_signup %}other{% endif %}
+                        event{{ other_open_events|pluralize }}
+                    </strong>
+                    open for signup{% if is_in_past or is_full %} ({% if is_full %}
+                    plus <strong>{{ is_full|length }}</strong> full{% endif %}{% if is_in_past and is_full %}, {% endif %}
+                    {% if is_in_past and not is_full %} plus {% endif %}
+                    {% if is_in_past %}<strong>{{ is_in_past|length }}</strong> ended{% endif %}){% endif %}.
+                    {% if other_open_events > 0 %}
+                        <a href="/event/{{ search_campaign.local_name }}/?akid={{args.akid}}&amp;zip={{args.zip}}">Search for another event</a>.
+                    {% endif %}
+                </p>
+                {% endif %}
+
+            </div>
+        </div>
+
+        <div class="ak-grid-row">
+            <div class="ak-grid-col ak-grid-col-6-of-12 ak-margin-top-1">
+
+                <div id="event-search-results">
+                    <!-- If you're embedding this page on your own site, remove everything from here... -->
+                    {% with 1 as hide_map %}
+                    {% include "./event_search_results.html" %}
+                    {% endwith %}
+                    <!-- ...to here -->
+                </div>
+                
+                {% if event.search_show_map %}
+                <!--<img src="http://maps.google.com/maps/api/staticmap?sensor=false&size=500x300&markers={{ event.address1|urlencode }}, {{ event.city_etc|urlencode }}">-->
+                {% if not event.is_virtual %}
+                <h5><a href="https://www.google.com/maps/place/{{ event.address1|urlencode }},%20{{ event.city_etc|urlencode }}" target="_blank" class="ak-larger-text"><small><img src="/media/modern/blue_marker.png" class="ak-marker"/> Click to see larger</a></small></h5>
+                {% endif %}
+                <div id="ak-map"></div>
+                
+                <p class="caption">
+                    {% if event.is_virtual %}
+                        Sign up to get event updates and more.
+                    {% else %}
+                        Sign up to get driving directions and more.
+                    {% endif %}
+                </p>
+
+                {% endif %}
+
+                <ul class="compact" id="ak-errors"></ul>
+
+            </div>
+
+            <div class="ak-grid-col ak-grid-col-6-of-12">
+                <h3>RSVP to attend this event</h3>
+                <div id="event-attend-form" class="{{templateset.custom_fields.field_errors_class|default:"ak-errs-below"}}">
+                    <div class="{{templateset.custom_fields.field_labels_class|default:"ak-labels-overlaid"}}">
+                        {% if not update %}
+                        {% include "./user_form_wrapper.html" %}
+                        {% else %}
+                        <div id="user-info">
+                            {% include "./user_form_wrapper.html" %}
+                            <script type="text/javascript">
+                            $('#user-info input[name=email]').attr('disabled','disabled');
+                            </script>
+                            <!-- If they want to "update email", they should do a new signup instead. -->
+                            <p>Need to sign up with another email address?  <a href="?" onclick="window.actionkit.args = {}; return actionkit.forms.logOut()">Click here.</a></p>
+                        </div>
+                        {% endif %}
+
+                    </div>
+            
+                    {% if form.ground_rules|is_nonblank and not update %}
+                        <div style="margin: 10px 0">
+                            <input id="id_event_signup_ground_rules" type="checkbox" name="event_signup_ground_rules" value="1">
+                            <label class="ak-checkbox-label" for="id_event_signup_ground_rules">
+                                <strong>Required:</strong>  
+                                I agree to <a href="#" onclick="$('#id_ground_rules_text').show(); $(this).before(this.innerHTML + ' (below)').hide(); return false;">the rules</a> for signing up for an event.
+                            </label>
+                        </div>
+                        <blockquote id="id_ground_rules_text" class="nojs">
+                            <div class="strong">Event ground rules:</div>
+                            {% include_tmpl form.ground_rules %}
+                        </blockquote>
+                    {% else %}
+                        <input type="hidden" name="event_signup_ground_rules" value="1">
+                    {% endif %}
+                    <div>
+                    <button type="submit" class="ak-submit-button">{% if update %}Update signup{% else %}Sign up for event{% endif %}</button>
+                    </div>
+                </div>           
+            </div>
+        </div>
+    
+    {% else %}
+
+        <div class="ak-grid-row">
+            <div class="ak-grid-col ak-grid-col-12-of-12">
+                {% if event.is_inactive or event.is_full or event.is_in_past or event.is_awaiting_confirmation %}
+                    {% if event.is_inactive %}
+                        <h2>Sorry, this event was cancelled.</h2>
+                    {% endif %}
+                    {% if event.is_full %}
+                        <h2>Sorry, this event is full.</h2>
+                    {% endif %}
+                    {% if event.is_in_past %}
+                        <h2>Sorry, it's too late to sign up for this event.</h2>
+                         
+                    {% endif %}
+                    {% if event.is_awaiting_confirmation %}
+                        <h2>Sorry, the event host has not yet confirmed this event.</h2>
+                    {% endif %}
+                {% else %}
+                    <h2>Sorry, this event isn't available for signup.</h2>
+                {% endif %}
+                <div>
+                    <a href="/event/{{ search_campaign.local_name }}/?akid={{args.akid}}&amp;zip={{args.zip}}">Search for another event</a>.
+                </div>
+
+                <p>
+                    There are <strong>{{ open_events|length }}</strong> events open for signup{% if is_in_past or is_full %}({% if is_full %} plus <strong>{{ is_full|length }}</strong> full{% endif %}{% if is_in_past and is_full %}, {% endif %}{% if is_in_past and not is_full %} plus {% endif %}{% if is_in_past %}<strong>{{ is_in_past|length }}</strong> ended{% endif %}){% endif %}.
+                </p>
+
+                <hr />
+                <p>If you already signed up to attend the event, here are the event details:</p>
+                {% include "./event_attendee_details.html" %}
+        
+            </div>
+        </div><!--grid-row-->
+
+    {% endif %}
+
+</form>
+
+
+{% endblock %}
+
+

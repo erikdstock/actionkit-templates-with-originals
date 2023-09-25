@@ -1,0 +1,99 @@
+{% extends "./wrapper.html" %}
+{% load switchcase %}
+
+{% block title %}Update Your Account{% endblock %}
+
+{% block content %}
+  
+{% if updated %}
+<div class="ak-grid-row">
+    <div class="ak-grid-col ak-grid-col-12-of-12">
+        <p>Thanks! We've updated your information.</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="ak-grid-row">
+    <div class="ak-grid-col ak-grid-col-12-of-12">
+        <h2>Update Your Account</h2>
+        {% if user %}
+        <p>
+            {% filter ak_text:"logged_in_as" %}You are logged in as{% endfilter %} <a href="/me/">{{ user.name|escape }}</a>.
+            <a href="/logout">{% filter ak_text:"logout" %}Log out{% endfilter %}</a>
+        </p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="ak-grid-row">
+    <div class="ak-grid-col ak-grid-col-9-of-12">
+        <form name="accountupdate" method="POST" class="ak-styled-fields {{templateset.custom_fields.field_errors_class|default:"ak-errs-below"}}">
+    
+            {{ form.non_field_errors }}
+
+            {% for field in form.visible_fields %}
+                <div class="ak-labels-before">
+                    <label for="{{ field.id_for_label }}">
+                        {{ field.label }} 
+                    </label>
+
+                    {% switch field.name %}
+                        {% case 'country' %}
+                               <select name="{{ input_name_prefix }}country" id="id_{{ input_name_prefix }}country" {% if onchange %}onchange="{{ onchange }}" onblur="{{ onchange }}"{% endif %}>
+                                <option selected="{{ field.value }}">{{ field.value }}</option>
+                                {% for std_name,name in templateset.lang.country_names_us_first %}
+                                    <option value="{{ std_name|escapeall }}">{{ name|escapeall }}</option>
+                                {% endfor %}
+                            </select>
+                        {% case 'state' %} 
+                                <script>
+                                    $(function() { //Make sure the current State value is selected
+                                        let selectedState = "{{ field.value }}";
+                                        $('#id_state > option[value=' + selectedState + ']').prop('selected', true);
+                                    })
+                                </script>
+			                    {% include "./state_select.html" %}
+
+                        {% else %}
+                                {{ field }}
+                    {% endswitch %}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+            <div class="ak-skip-label-before">
+                {{ form.privacy.errors }}
+                {% include "./privacy.html" %}
+            </div>
+
+ 
+    </div>
+
+    <div class="ak-grid-col ak-grid-col-3-of-12">
+    </div>
+</div>
+
+<div class="ak-grid-row">
+    <div class="ak-grid-col ak-grid-col-12-of-12">
+            <button type="submit" class="ak-submit-button">Submit</button>
+    </div>
+</div>
+</form>
+
+<script>
+    $('ul.errorlist').each( function () {
+        $( this ).addClass('ak-errors').css('display', 'block').
+                parent().find('label, :input').addClass('ak-error').
+                closest('form').addClass('contains-errors');
+    } );
+    // Run just the country-switching stuff from action forms.
+    actionkit.forms.setForm('accountupdate');
+    actionkit.context = {{ js_context|json }};
+    $(actionkit.form.country).change(function() {
+        actionkit.forms.setForm('accountupdate');
+        actionkit.forms.reflectCountryChange();
+    });
+    actionkit.forms.reflectCountryChange();
+</script>
+
+{% endblock content %}
+

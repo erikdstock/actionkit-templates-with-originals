@@ -1,6 +1,14 @@
+{% load actionkit_tags %}
+
 <!DOCTYPE html>
 <html lang="{{page.lang.iso_code|default:'en'}}"{% if page.lang.is_rtl %} dir="rtl"{% endif %}>
 <head>
+    <!--
+        This loads the `static` template tag
+        {% load static %}
+    -->
+    <link rel="stylesheet" type='text/css' href="{% static 'css/styles.css' %}"> 
+
     <meta charset="utf-8">
     <title>{% block title %}{{ page.title }} | {% filter ak_text:"org_name" %}{% client_name %}{% endfilter %}{% endblock %}</title>
     <script>startTime=new Date()</script>
@@ -31,7 +39,6 @@
         //ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js
         /resources/actionkit.js
     {% end %}
-    
     <style>
     {% if templateset.custom_fields.font_family %}
         html {
@@ -295,6 +302,7 @@
     {{ analytics_tag_code|safe }}
 
     {% if analytics_key %}
+
     <script type="text/javascript">
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
     (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),

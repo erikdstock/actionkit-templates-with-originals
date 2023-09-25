@@ -1,0 +1,24 @@
+version: '3.7'
+services:
+  app:
+    environment:
+      - TEMPLATE_DIR=template_set # the default
+      # - TEMPLATE_DIR=actionkit-original/templates
+    build: .
+    command: aktemplates runserver 0.0.0.0:8000
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/app
+      # - pip:/usr/local/lib/python2.7/site-packages
+    working_dir: '/app'
+  # Not working yet - run locally?
+  # tailwind:
+  #   tty: true
+  #   build: .
+  #   command: npm start
+  #   volumes:
+  #     - .:/app
+  #   working_dir: '/app'
+# volumes:
+#   pip:
